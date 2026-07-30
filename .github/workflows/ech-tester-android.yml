@@ -39,6 +39,13 @@ jobs:
 
       - name: Upload Go test log on failure
         if: failure() && steps.go-test.conclusion == 'failure'
+        run: |
+          while IFS= read -r line; do
+            echo "::error title=Go test::$line"
+          done < ech-tester/ech/go-test.log
+
+      - name: Upload Go test log artifact
+        if: failure() && steps.go-test.conclusion == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: ech-tester-go-test-log
