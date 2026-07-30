@@ -31,8 +31,20 @@ jobs:
           go-version: "1.24"
 
       - name: Test Go ECH engine
+        id: go-test
         working-directory: ech-tester/ech
-        run: go test ./...
+        run: |
+          set -o pipefail
+          go test ./... 2>&1 | tee go-test.log
+
+      - name: Upload Go test log on failure
+        if: failure() && steps.go-test.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ech-tester-go-test-log
+          path: ech-tester/ech/go-test.log
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Set up Java
         uses: actions/setup-java@v4
