@@ -76,8 +76,24 @@ jobs:
             -o ../android/app/libs/echtester.aar ./echtester
 
       - name: Build release APK
+        id: gradle-build
         working-directory: ech-tester/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon 2>&1 | tee gradle-build.log
+
+      - name: Publish temporary Gradle log branch
+        if: failure() && steps.gradle-build.conclusion == 'failure'
+        working-directory: ech-tester/android
+        env:
+          DEBUG_BRANCH: "ech-tester-debug-${{ github.run_id }}"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp gradle-build.log "../../gradle-build-${GITHUB_RUN_ID}.log"
+          git add "../../gradle-build-${GITHUB_RUN_ID}.log"
+          git commit -m "ci: temporary ECH tester Gradle log"
+          git push origin "HEAD:refs/heads/${DEBUG_BRANCH}"
 
       - name: Rename and verify single ABI artifact
         run: |
