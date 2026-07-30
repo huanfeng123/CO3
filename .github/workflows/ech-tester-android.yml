@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ech-tester-android.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   NDK_VERSION: "27.1.12297006"
@@ -52,6 +52,19 @@ jobs:
           path: ech-tester/ech/go-test.log
           if-no-files-found: error
           retention-days: 3
+
+      - name: Publish temporary Go test log branch
+        if: failure() && steps.go-test.conclusion == 'failure'
+        working-directory: ech-tester/ech
+        env:
+          DEBUG_BRANCH: "ech-tester-debug-${{ github.run_id }}"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp go-test.log "../../go-test-${GITHUB_RUN_ID}.log"
+          git add "../../go-test-${GITHUB_RUN_ID}.log"
+          git commit -m "ci: temporary ECH tester test log"
+          git push origin "HEAD:refs/heads/${DEBUG_BRANCH}"
 
       - name: Set up Java
         uses: actions/setup-java@v4
