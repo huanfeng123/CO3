@@ -8,7 +8,7 @@ on:
       - ".github/workflows/ech-tester-android.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   NDK_VERSION: "27.1.12297006"
@@ -31,40 +31,8 @@ jobs:
           go-version: "1.24"
 
       - name: Test Go ECH engine
-        id: go-test
         working-directory: ech-tester/ech
-        run: |
-          set -o pipefail
-          go test ./... 2>&1 | tee go-test.log
-
-      - name: Upload Go test log on failure
-        if: failure() && steps.go-test.conclusion == 'failure'
-        run: |
-          while IFS= read -r line; do
-            echo "::error title=Go test::$line"
-          done < ech-tester/ech/go-test.log
-
-      - name: Upload Go test log artifact
-        if: failure() && steps.go-test.conclusion == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ech-tester-go-test-log
-          path: ech-tester/ech/go-test.log
-          if-no-files-found: error
-          retention-days: 3
-
-      - name: Publish temporary Go test log branch
-        if: failure() && steps.go-test.conclusion == 'failure'
-        working-directory: ech-tester/ech
-        env:
-          DEBUG_BRANCH: "ech-tester-debug-${{ github.run_id }}"
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp go-test.log "../../go-test-${GITHUB_RUN_ID}.log"
-          git add "../../go-test-${GITHUB_RUN_ID}.log"
-          git commit -m "ci: temporary ECH tester test log"
-          git push origin "HEAD:refs/heads/${DEBUG_BRANCH}"
+        run: go test ./...
 
       - name: Set up Java
         uses: actions/setup-java@v4

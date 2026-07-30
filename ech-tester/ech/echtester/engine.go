@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"time"
 )
 
 // Test performs one TLS 1.3 ECH handshake and returns a complete plain-text log.
